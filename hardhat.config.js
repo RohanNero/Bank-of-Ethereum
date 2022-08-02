@@ -1,14 +1,14 @@
-require("@nomiclabs/hardhat-waffle");
-require("hardhat-gas-reporter");
-require("@nomiclabs/hardhat-ethers");
-require("@nomiclabs/hardhat-etherscan");
-require("dotenv").config();
-require("solidity-coverage");
-require("hardhat-deploy");
+require("@nomiclabs/hardhat-waffle")
+require("hardhat-gas-reporter")
+require("@nomiclabs/hardhat-ethers")
+require("@nomiclabs/hardhat-etherscan")
+require("dotenv").config()
+require("solidity-coverage")
+require("hardhat-deploy")
 
-const RINKEBY_PRIVATE_KEY = process.env.RINKEBY_PRIVATE_KEY;
-const RINKEBY_URL = process.env.RINKEBY_URL;
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
+const RINKEBY_PRIVATE_KEY = process.env.RINKEBY_PRIVATE_KEY
+const RINKEBY_URL = process.env.RINKEBY_URL
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
 
 module.exports = {
   namedAccounts: {
@@ -19,7 +19,10 @@ module.exports = {
       // the account 0 on one network can be different than on another
     },
   },
-  solidity: "0.8.7",
+  solidity: {
+    compilers: [{ version: "0.8.7" }, { version: "0.6.6" }],
+  },
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {
       chainId: 31337,
@@ -38,4 +41,4 @@ module.exports = {
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,
   },
-};
+}
