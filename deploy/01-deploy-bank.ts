@@ -1,7 +1,7 @@
 
-const { network } = require("hardhat")
-const { networkConfig, DECIMALS, INITIAL_ANSWER } = require("../helper-hardhat-config")
-const { verify } = require("../utils/verify")
+import { network } from "hardhat"
+import { networkConfig, DECIMALS, INITIAL_ANSWER } from "../helper-hardhat-config"
+import { verify } from "../utils/verify"
 
 module.exports = async function () {
   const { getNamedAccounts, deployments } = hre
@@ -13,7 +13,7 @@ module.exports = async function () {
     // if chainId is X use address Z
     // if chainId is Y use address A
     //const ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"]
-    let ethUsdPriceFeedAddress
+    let ethUsdPriceFeedAddress: address
     if (chainId == "31337") {
         const ethUsdPriceFeed = await deployments.get("MockV3Aggregator")
         ethUsdPriceFeedAddress = ethUsdPriceFeed.address

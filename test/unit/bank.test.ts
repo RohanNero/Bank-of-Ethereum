@@ -1,7 +1,7 @@
-const { assert, expect } = require("chai")
-const { parseUnits } = require("ethers/lib/utils")
-const { deployments, ethers, getNamedAccounts } = require("hardhat")
-const { developmentChains } = require("../../helper-hardhat-config")
+import { assert, expect } from "chai"
+import { parseUnits } from "ethers/lib/utils"
+import { deployments, ethers, getNamedAccounts } from "hardhat"
+import { developmentChains } from "../../helper-hardhat-config"
 
 !developmentChains.includes(network.name)
   ? describe.skip

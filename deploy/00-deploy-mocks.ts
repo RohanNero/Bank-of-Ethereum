@@ -1,5 +1,5 @@
-const { developmentChains, DECIMALS, INITIAL_ANSWER } = require("../helper-hardhat-config")
-const { network } = require("hardhat")
+import { developmentChains, DECIMALS, INITIAL_ANSWER } from "../helper-hardhat-config"
+import { network } from "hardhat"
 
 module.exports = async function () {
   const { getNamedAccounts, deployments } = hre

@@ -1,15 +1,15 @@
-require("@nomiclabs/hardhat-waffle");
-require("hardhat-gas-reporter");
-require("@nomiclabs/hardhat-ethers");
-require("@nomiclabs/hardhat-etherscan");
-require("dotenv").config();
-require("solidity-coverage");
-require("hardhat-deploy");
+import "@nomiclabs/hardhat-waffle"
+import "hardhat-gas-reporter"
+import "@nomiclabs/hardhat-ethers"
+import "@nomiclabs/hardhat-etherscan"
+import "dotenv/config"
+import "solidity-coverage"
+import "hardhat-deploy"
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const RINKEBY_URL = process.env.RINKEBY_URL;
-const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL;
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
+const PRIVATE_KEY = process.env.PRIVATE_KEY
+const RINKEBY_URL = process.env.RINKEBY_URL
+const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
 
 module.exports = {
   namedAccounts: {
@@ -50,4 +50,4 @@ module.exports = {
   mocha: {
     timeout: 500000,
   },
-};
+}
