@@ -1,14 +1,15 @@
-require("@nomiclabs/hardhat-waffle")
-require("hardhat-gas-reporter")
-require("@nomiclabs/hardhat-ethers")
-require("@nomiclabs/hardhat-etherscan")
-require("dotenv").config()
-require("solidity-coverage")
-require("hardhat-deploy")
+require("@nomiclabs/hardhat-waffle");
+require("hardhat-gas-reporter");
+require("@nomiclabs/hardhat-ethers");
+require("@nomiclabs/hardhat-etherscan");
+require("dotenv").config();
+require("solidity-coverage");
+require("hardhat-deploy");
 
-const RINKEBY_PRIVATE_KEY = process.env.RINKEBY_PRIVATE_KEY
-const RINKEBY_URL = process.env.RINKEBY_URL
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const RINKEBY_URL = process.env.RINKEBY_URL;
+const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL;
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
 module.exports = {
   namedAccounts: {
@@ -28,9 +29,14 @@ module.exports = {
       chainId: 31337,
       blockConfirmations: 1,
     },
+    goerli: {
+      url: GOERLI_RPC_URL || "",
+      accounts: [PRIVATE_KEY],
+      chainId: 5,
+    },
     rinkeby: {
       url: RINKEBY_URL || "",
-      accounts: [RINKEBY_PRIVATE_KEY],
+      accounts: [PRIVATE_KEY],
       chainId: 4,
       blockConfirmations: 7,
     },
@@ -41,4 +47,7 @@ module.exports = {
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,
   },
-}
+  mocha: {
+    timeout: 500000,
+  },
+};

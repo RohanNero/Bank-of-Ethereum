@@ -21,7 +21,7 @@ module.exports = async function () {
      else {
        ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"]
     }
-    log(ethUsdPriceFeedAddress)
+    //log(ethUsdPriceFeedAddress)
      const bank = await deploy("Bank", {
           from: deployer,
           args: [ethUsdPriceFeedAddress],
