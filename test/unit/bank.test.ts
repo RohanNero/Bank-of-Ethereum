@@ -93,16 +93,20 @@ import { developmentChains } from "../../helper-hardhat-config"
           assert.equal(tx.add(sendValue).toString(), newTx.toString())
         })
       })
-      // describe("getBalanceInUSD", function () {
-      //   it.only("should return the user's balance in terms of USD", async function () {
-      //     const tx = await bank.MINIMUMUSD()
-      //     console.log(tx.toString())
-      //     const bal = await bank.getBalanceInUSD()
-      //     console.log(bal)
-      //     const expectedValue = await bank.sendValue.getConversionRate()
-      //     console.log(expectedValue)
-      //   })
-      // })
+      describe("getBalanceInUSD", function () {
+        it("should return the user's balance in terms of USD", async function () {
+          //console.log((await bank.getBalanceInUSD()).toString())
+          const tx = await bank.MINIMUMUSD()
+          //console.log(tx.toString())
+          await bank.deposit({value: "1000000000000000000"})
+          //console.log((await bank.getBalanceInUSD()).toString())
+          const bal = await bank.getBalanceInUSD()
+          //console.log(bal.toString())
+          assert.equal(bal.toString(), "2000000000000000000000")
+          //const expectedValue = await bank.sendValue.getConversionRate()
+          //console.log(expectedValue)
+        })
+      })
       describe("receive", function () {
         it("should call the deposit function when money is sent to contract", async function () {
           const [owner] = await ethers.getSigners()
