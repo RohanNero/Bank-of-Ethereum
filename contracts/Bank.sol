@@ -3,20 +3,25 @@
 pragma solidity ^0.8.7;
 
 import "./PriceConverter.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title A contract for storing user's money
 /// @author Rohan Nero
 /// @notice This contract allows user's to deposit and withdraw money autonomously
 /// @dev This implements price feeds as our library
-contract Bank {
+contract Bank is Ownable {
   // Type Declarations
   using PriceConverter for uint256;
 
-  // State Variables
+
+  // Global Variables
   uint256 public constant MINIMUMUSD = 7 * 1e18;
   address[] public accounts;
-  mapping(address => uint256) private balances;
+  mapping(address => uint256) private ethBalances;
+  mapping(address => uint256) private linkBalances;
   AggregatorV3Interface public priceFeed;
+  IERC20 token;
   // Events and Modifiers
 
   event depositInfo(address, uint256);
@@ -32,8 +37,9 @@ contract Bank {
   // private
   // view / pure
 
-  constructor(address priceFeedAddress) {
+  constructor(address priceFeedAddress, address tokenAddress) {
     priceFeed = AggregatorV3Interface(priceFeedAddress);
+    token = IERC20(tokenAddress);
   }
 
   receive() external payable {
@@ -43,37 +49,37 @@ contract Bank {
   /// @notice This function allows you to deposit money into your 'bank account'
   /// @dev This requires you to deposit atleast $7 USD using price feed
   function deposit() public payable {
-    uint256 oldBal = balances[msg.sender];
-    require(
-      msg.value.getConversionRate(priceFeed) > MINIMUMUSD,
-      "Must Send Atleast $7 USD!"
-    );
-    balances[msg.sender] += msg.value;
+    uint256 oldBal = ethBalances[msg.sender];
+    // require(
+    //   msg.value.getConversionRate(priceFeed) > MINIMUMUSD,
+    //   "Must Send Atleast $7 USD!"
+    // );
+    ethBalances[msg.sender] += msg.value;
 
     // Checking to see if account exists before adding to accounts array.
     if (exists(msg.sender) == false) {
       accounts.push(msg.sender);
     }
     emit depositInfo(msg.sender, msg.value);
-    emit depositBalances(oldBal, balances[msg.sender]);
+    emit depositBalances(oldBal, ethBalances[msg.sender]);
   }
 
   function withdraw(uint256 _amount) public {
-    uint256 oldBal = balances[msg.sender];
-    require(balances[msg.sender] >= _amount, "Insufficent Funds!");
-    balances[msg.sender] -= _amount;
+    uint256 oldBal = ethBalances[msg.sender];
+    require(ethBalances[msg.sender] >= _amount, "Insufficent Funds!");
+    ethBalances[msg.sender] -= _amount;
     (bool sent, ) = payable(msg.sender).call{value: _amount}("");
     require(sent, "Withdrawal Failed!");
     emit withdrawInfo(msg.sender, _amount);
-    emit withdrawBalances(oldBal, balances[msg.sender]);
+    emit withdrawBalances(oldBal, ethBalances[msg.sender]);
   }
 
   function getBalanceInETH() public view returns (uint256) {
-    return (balances[msg.sender]);
+    return (ethBalances[msg.sender]);
   }
 
   function getBalanceInUSD() public view returns (uint256) {
-    uint256 balanceInUSD = (balances[msg.sender].getConversionRate(priceFeed));
+    uint256 balanceInUSD = (ethBalances[msg.sender].getConversionRate(priceFeed));
     return (balanceInUSD);
   }
 
@@ -87,6 +93,18 @@ contract Bank {
     }
     return false;
   }
+
+
+  function getLinkBalance() public view returns(uint) {
+    uint linkBal = token.balanceOf(address(this));
+    return linkBal;
+  }
+
+  function withdrawLink(address to, uint amount) public onlyOwner() {
+    token.transfer(to, amount);
+
+  }
+
 }
 
 // 980,683 Original gas cost

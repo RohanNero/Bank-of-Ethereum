@@ -6,6 +6,7 @@ const networkConfig = {
   5: {
     name: "goerli",
     ethUsdPriceFeed: "0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e",
+    linkTokenAddress: "0x326C977E6efc84E512bB9C30f76E30c160eD06FB",
   },
   137: {
     name: "polygon",

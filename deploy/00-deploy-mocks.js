@@ -16,6 +16,12 @@ module.exports = async function () {
             log: true,
             args: [DECIMALS, INITIAL_ANSWER]
         })
+
+        await deploy("MockLinkToken", {
+            from: deployer,
+            args: [1000],
+            log: true
+        })
         log("Mocks deployed!")
         log("------------------------------------------------")
     }

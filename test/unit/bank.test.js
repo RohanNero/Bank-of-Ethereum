@@ -9,6 +9,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
       let bank
       let deployer
       let mockV3Aggregator
+      let mockLinkToken
       const sendValue = parseUnits("5000000", "gwei")
       beforeEach(async function () {
         //sendValue = parseUnits("5000000", "gwei")
@@ -20,6 +21,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
           "MockV3Aggregator",
           deployer
         )
+        mockLinkToken = await ethers.getContract("MockLinkToken", deployer)
       })
       describe("constructor", async function () {
         it("sets the aggregator address correctly", async function () {
@@ -32,12 +34,12 @@ const { developmentChains } = require("../../helper-hardhat-config")
         beforeEach(async function () {
           await bank.deposit({ value: sendValue })
         })
-        it("should revert if called with 0 value", async function () {
-          const txResponse = bank.deposit()
-          await expect(txResponse).to.be.revertedWith(
-            "Must Send Atleast $7 USD!"
-          )
-        })
+        // it("should revert if called with 0 value", async function () {
+        //   const txResponse = bank.deposit()
+        //   await expect(txResponse).to.be.revertedWith(
+        //     "Must Send Atleast $7 USD!"
+        //   )
+        // })
         it("should update user balance after deposit", async function () {
           const oldBal = await bank.getBalanceInETH()
           const txResponse = bank.deposit({ value: sendValue })
@@ -112,6 +114,32 @@ const { developmentChains } = require("../../helper-hardhat-config")
           })
           const bal = await bank.connect(owner).getBalanceInETH()
           assert.equal(bal, sendValue.toString())
+        })
+      })
+      describe("getLinkBalance", function() {
+        it("returns user's LINK balance correctly", async function() {
+          const initialBal = await bank.getLinkBalance()
+          const value = await mockLinkToken.balanceOf(deployer)
+          console.log(`value: ${value}`)
+          await mockLinkToken.transfer(bank.address, 7)
+          const finalBal = await bank.getLinkBalance()
+          console.log(`initialBal: ${initialBal}`)
+          console.log(`finalBal: ${finalBal}`)
+          assert.equal(initialBal.add(7).toString(), finalBal.toString())
+        })
+        describe("withdrawLink", function() {
+          beforeEach(async function() {
+            await mockLinkToken.transfer(bank.address, 500)
+          })
+          
+          it.only("allows owner to withdraw LINK to any address", async function() {
+            const initialBal = await bank.getLinkBalance()
+            await bank.withdrawLink(deployer, 100)
+            const finalBal = await bank.getLinkBalance()
+            console.log(`initialBal: ${initialBal}`)
+          console.log(`finalBal: ${finalBal}`)
+          assert.equal(initialBal.sub(100).toString(), finalBal.toString())
+          })
         })
       })
     })
