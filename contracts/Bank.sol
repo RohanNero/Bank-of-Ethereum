@@ -2,9 +2,15 @@
 
 pragma solidity ^0.8.7;
 
+import "hardhat/console.sol";
 import "./PriceConverter.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+
+
+
+error Bank__LinkDepositFailed();
+error Bank__InsufficientLinkBalance(uint amountRequested, uint currentLinkBalance);
 
 /// @title A contract for storing user's money
 /// @author Rohan Nero
@@ -64,6 +70,15 @@ contract Bank is Ownable {
     emit depositBalances(oldBal, ethBalances[msg.sender]);
   }
 
+  function depositApprovedLink() public {
+    uint amount = token.allowance(msg.sender, address(this));
+    require(token.transferFrom(msg.sender, address(this), amount));
+    if (exists(msg.sender) == false) {
+      accounts.push(msg.sender);
+    }
+    linkBalances[msg.sender] += amount;
+  }
+
   function withdraw(uint256 _amount) public {
     uint256 oldBal = ethBalances[msg.sender];
     require(ethBalances[msg.sender] >= _amount, "Insufficent Funds!");
@@ -74,6 +89,31 @@ contract Bank is Ownable {
     emit withdrawBalances(oldBal, ethBalances[msg.sender]);
   }
 
+  function withdrawLink(uint amount) public onlyOwner() {
+    if (amount <= linkBalances[msg.sender]) {
+      require(token.transfer(msg.sender, amount));
+      linkBalances[msg.sender] -= amount;
+    } else {
+      revert Bank__InsufficientLinkBalance(amount, linkBalances[msg.sender]);
+    }
+  }
+
+  function withdrawOwnerlessLink() public onlyOwner {
+    uint totalOwnedLink;
+    for(uint i = 0; i < accounts.length; i++) {
+      totalOwnedLink += linkBalances[accounts[i]];
+      //console.log("linkBalances:",linkBalances[accounts[i]]);
+    } 
+    if(totalOwnedLink < getTotalLinkDeposited()) {
+      uint difference = (getTotalLinkDeposited()) - totalOwnedLink;
+      //console.log("totalOwnedLink:", totalOwnedLink);
+      //console.log("totalLinkDeposited:",getTotalLinkDeposited());
+      //console.log("difference", difference);
+      token.transfer(msg.sender, difference);
+
+    }
+  }
+
   function getBalanceInETH() public view returns (uint256) {
     return (ethBalances[msg.sender]);
   }
@@ -81,6 +121,26 @@ contract Bank is Ownable {
   function getBalanceInUSD() public view returns (uint256) {
     uint256 balanceInUSD = (ethBalances[msg.sender].getConversionRate(priceFeed));
     return (balanceInUSD);
+  }
+
+  function viewDepositedLinkBalance() public view returns(uint linkBal) {
+    linkBal = linkBalances[msg.sender];
+  }
+
+  function viewWalletLinkBalance() public view returns(uint walletBal) {
+    walletBal = token.balanceOf(msg.sender);
+  }
+
+  function getTotalLinkDeposited() public view onlyOwner returns(uint totalLinkDeposited) {
+    totalLinkDeposited = token.balanceOf(address(this));
+  }
+
+  function getThisAddress() public view returns(address) {
+    return address(this);
+  }
+
+  function getLinkTokenAddress() public view returns(address) {
+    return address(token);
   }
 
   /// @notice This function loops through the accounts array to find existing accounts
@@ -94,17 +154,12 @@ contract Bank is Ownable {
     return false;
   }
 
+  // function getLinkAllowance() public view returns(uint allowance) {
+  //   allowance = token.allowance(msg.sender, address(this));
+  //   console.log("allowance:", allowance);
+  // }
 
-  function getLinkBalance() public view returns(uint) {
-    uint linkBal = token.balanceOf(address(this));
-    return linkBal;
-  }
-
-  function withdrawLink(address to, uint amount) public onlyOwner() {
-    token.transfer(to, amount);
-
-  }
-
+  
 }
 
 // 980,683 Original gas cost

@@ -1,4 +1,4 @@
-const { link } = require("ethereum-waffle")
+//const { link } = require("ethereum-waffle")
 const { network } = require("hardhat")
 const { networkConfig, DECIMALS, INITIAL_ANSWER, developmentChains } = require("../helper-hardhat-config")
 const { verify } = require("../utils/verify")
@@ -15,7 +15,7 @@ module.exports = async function () {
     // if chainId is Y use address A
     //const ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"]
     let ethUsdPriceFeedAddress, linkTokenAddress
-    if (chainId == "31337") {
+    if (developmentChains.includes(network.name)) {
         const ethUsdPriceFeed = await deployments.get("MockV3Aggregator")
         ethUsdPriceFeedAddress = ethUsdPriceFeed.address
         const linkToken = await deployments.get("MockLinkToken")

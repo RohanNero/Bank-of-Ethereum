@@ -95,16 +95,16 @@ const { developmentChains } = require("../../helper-hardhat-config")
           assert.equal(tx.add(sendValue).toString(), newTx.toString())
         })
       })
-      // describe("getBalanceInUSD", function () {
-      //   it.only("should return the user's balance in terms of USD", async function () {
-      //     const tx = await bank.MINIMUMUSD()
-      //     console.log(tx.toString())
-      //     const bal = await bank.getBalanceInUSD()
-      //     console.log(bal)
-      //     const expectedValue = await bank.sendValue.getConversionRate()
-      //     console.log(expectedValue)
-      //   })
-      // })
+      describe("getBalanceInUSD", function () {
+        it("should return the user's ETH balance in terms of USD", async function () {
+          const oneEth = ethers.utils.parseEther("1")
+          //console.log(oneEth.toString())
+          await bank.deposit({value: oneEth})
+          const bal = await bank.getBalanceInUSD()
+          //console.log(bal.toString())
+          assert.equal(bal.toString(), "2000000000000000000000")
+        })
+      })
       describe("receive", function () {
         it("should call the deposit function when money is sent to contract", async function () {
           const [owner] = await ethers.getSigners()
@@ -116,30 +116,89 @@ const { developmentChains } = require("../../helper-hardhat-config")
           assert.equal(bal, sendValue.toString())
         })
       })
-      describe("getLinkBalance", function() {
+      describe("viewDepositedLinkBalance", function() {
+        beforeEach(async function() {
+          await mockLinkToken.approve(bank.address, 7)
+          
+        })
         it("returns user's LINK balance correctly", async function() {
-          const initialBal = await bank.getLinkBalance()
-          const value = await mockLinkToken.balanceOf(deployer)
-          console.log(`value: ${value}`)
-          await mockLinkToken.transfer(bank.address, 7)
-          const finalBal = await bank.getLinkBalance()
-          console.log(`initialBal: ${initialBal}`)
-          console.log(`finalBal: ${finalBal}`)
+          const initialBal = await bank.viewDepositedLinkBalance()
+          await bank.depositApprovedLink()
+          const finalBal = await bank.viewDepositedLinkBalance()
+          // console.log(`initialBal: ${initialBal}`)
+          // console.log(`finalBal: ${finalBal}`)
           assert.equal(initialBal.add(7).toString(), finalBal.toString())
         })
-        describe("withdrawLink", function() {
-          beforeEach(async function() {
-            await mockLinkToken.transfer(bank.address, 500)
-          })
-          
-          it.only("allows owner to withdraw LINK to any address", async function() {
-            const initialBal = await bank.getLinkBalance()
-            await bank.withdrawLink(deployer, 100)
-            const finalBal = await bank.getLinkBalance()
-            console.log(`initialBal: ${initialBal}`)
-          console.log(`finalBal: ${finalBal}`)
+      })
+      describe("withdrawLink", function() {
+        beforeEach(async function() {
+          await mockLinkToken.approve(bank.address, 100)
+          await bank.depositApprovedLink()
+        })
+        it("allows owner to withdraw LINK correctly", async function() {
+          const initialBal = await bank.viewDepositedLinkBalance()
+          await bank.withdrawLink(100)
+          const finalBal = await bank.viewDepositedLinkBalance()
+          //console.log(`initialBal: ${initialBal}`)
+          //console.log(`finalBal: ${finalBal}`)
           assert.equal(initialBal.sub(100).toString(), finalBal.toString())
-          })
+        })
+        it("reverts if withdraw exceeds balance", async function() {
+          await expect(bank.withdrawLink(777)).to.be.revertedWith("Bank__InsufficientLinkBalance(777, 100)")
+        })
+      
+      })
+      describe("depositApprovedLink", function() {
+        it("allows users to deposit link correctly", async function() {
+          //console.log((await mockLinkToken.balanceOf(deployer)).toString())
+          const initialBal = await bank.viewDepositedLinkBalance()
+          await mockLinkToken.approve(bank.address, 100)
+          await bank.depositApprovedLink()
+          const finalBal = await bank.viewDepositedLinkBalance()
+          //console.log(`initialBal: ${initialBal}`)
+          //console.log(`finalBal: ${finalBal}`)
+        })
+      })
+      describe("withdrawOwnerlessLink", function() {
+        beforeEach(async function() {
+          await mockLinkToken.approve(bank.address, 250)
+          await bank.depositApprovedLink()
+          await mockLinkToken.transfer(bank.address, 50)
+        })
+        it("withdraws only LINK without a declared owner", async function() {
+          const linkBalance = await bank.viewWalletLinkBalance()
+          const totalLinkDeposited = await bank.getTotalLinkDeposited()
+          //console.log(`totalLinkDeposited: ${totalLinkDeposited.toString()}`)
+          //console.log(`deployer's walletLinkBalance: ${linkBalance}`)
+          await bank.withdrawOwnerlessLink()
+          const newLinkBalance = await bank.viewWalletLinkBalance()
+          const newTotalLinkDeposited = await bank.getTotalLinkDeposited()
+          //console.log(`newTotalLinkDeposited: ${newTotalLinkDeposited.toString()}`)
+          //console.log(`newLinkBalance: ${newLinkBalance}`)
+          assert.equal(totalLinkDeposited.sub(50).toString(), newTotalLinkDeposited.toString())
+        })
+      })
+      describe("getThisAddress", function() {
+        it("returns address correctly", async function() {
+          const addr = await bank.getThisAddress()
+          //console.log(addr)
+        })
+        
+      })
+      describe("getLinkTokenAddress", function() {
+        it("returns correct link token address", async function() {
+          const addr = await bank.getLinkTokenAddress()
+          // console.log(`link address: ${addr}`)
+          // console.log(`mock address: ${mockLinkToken.address}`)
+        })
+        
+      })
+      describe("viewWalletLinkBalance", function() {
+        it("returns amount of LINK in balance correctly", async function() {
+          // amount I minted to msg.sender from mockLinkToken contract
+          const expectedValue = "1000"
+          const returnedValue = await bank.viewWalletLinkBalance()
+          assert.equal(expectedValue, returnedValue.toString())
         })
       })
     })
