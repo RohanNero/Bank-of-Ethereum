@@ -30,10 +30,15 @@ contract Bank is Ownable {
   IERC20 token;
   // Events and Modifiers
 
-  event depositInfo(address, uint256);
-  event depositBalances(uint256, uint256);
-  event withdrawInfo(address, uint256);
-  event withdrawBalances(uint256, uint256);
+  /// @dev Original event layout: 
+  // event depositInfo(address, uint256);
+  // event depositBalances(uint256, uint256);
+  // event withdrawInfo(address, uint256);
+  // event withdrawBalances(uint256, uint256);
+
+  event depositInfo(address depositor, uint256 depositAmount, uint oldBal, uint newBal);
+  event withdrawInfo(address withdrawer, uint256 withdrawalAmount, uint oldBal, uint newBal);
+  event OwnerlessLinkWithdraw(address owner, uint indexed amount);
 
   // constructor
   // receive / fallback
@@ -53,21 +58,22 @@ contract Bank is Ownable {
   }
 
   /// @notice This function allows you to deposit money into your 'bank account'
-  /// @dev This requires you to deposit atleast $7 USD using price feed
+  /// @dev This requires you to deposit atleast $7 USD using price feed (only when depositing ETH)
   function deposit() public payable {
     uint256 oldBal = ethBalances[msg.sender];
-    // require(
-    //   msg.value.getConversionRate(priceFeed) > MINIMUMUSD,
-    //   "Must Send Atleast $7 USD!"
-    // );
+    require(
+      msg.value.getConversionRate(priceFeed) > MINIMUMUSD,
+      "Must Send Atleast $7 USD!"
+    );
     ethBalances[msg.sender] += msg.value;
 
     // Checking to see if account exists before adding to accounts array.
     if (exists(msg.sender) == false) {
       accounts.push(msg.sender);
     }
-    emit depositInfo(msg.sender, msg.value);
-    emit depositBalances(oldBal, ethBalances[msg.sender]);
+    //emit depositInfo(msg.sender, msg.value);
+    //emit depositBalances(oldBal, ethBalances[msg.sender]);
+    emit depositInfo(msg.sender, msg.value, oldBal, ethBalances[msg.sender]);
   }
 
   function depositApprovedLink() public {
@@ -77,25 +83,42 @@ contract Bank is Ownable {
       accounts.push(msg.sender);
     }
     linkBalances[msg.sender] += amount;
+    emit depositInfo(msg.sender, amount, linkBalances[msg.sender] - amount, linkBalances[msg.sender]);
   }
 
-  function withdraw(uint256 _amount) public {
-    uint256 oldBal = ethBalances[msg.sender];
-    require(ethBalances[msg.sender] >= _amount, "Insufficent Funds!");
-    ethBalances[msg.sender] -= _amount;
-    (bool sent, ) = payable(msg.sender).call{value: _amount}("");
+  function withdraw(uint256 amount) public {
+    require(ethBalances[msg.sender] >= amount, "Insufficent Funds!");
+    ethBalances[msg.sender] -= amount;
+    (bool sent, ) = payable(msg.sender).call{value: amount}("");
     require(sent, "Withdrawal Failed!");
-    emit withdrawInfo(msg.sender, _amount);
-    emit withdrawBalances(oldBal, ethBalances[msg.sender]);
+    //emit withdrawInfo(msg.sender, _amount);
+    //emit withdrawBalances(oldBal, ethBalances[msg.sender]);
+    emit withdrawInfo(msg.sender, amount, ethBalances[msg.sender] + amount, ethBalances[msg.sender]);
   }
 
   function withdrawLink(uint amount) public onlyOwner() {
     if (amount <= linkBalances[msg.sender]) {
       require(token.transfer(msg.sender, amount));
       linkBalances[msg.sender] -= amount;
+      emit withdrawInfo(msg.sender, amount, (linkBalances[msg.sender] + amount), linkBalances[msg.sender]);
     } else {
       revert Bank__InsufficientLinkBalance(amount, linkBalances[msg.sender]);
     }
+  }
+
+  function withdrawAllETH() public {
+    uint initialBal = ethBalances[msg.sender];
+    require(initialBal > 0, "ETH balance already 0");
+    ethBalances[msg.sender] = 0;
+    (bool sent, ) = payable(msg.sender).call{value: initialBal }("");
+    require(sent, "Withdrawal Failed!");
+  }
+
+  function withdrawAllLINK() public {
+    uint initialBal = linkBalances[msg.sender];
+    require(initialBal > 0, "LINK balance already 0");
+    linkBalances[msg.sender] = 0;
+    token.transfer(msg.sender, initialBal);
   }
 
   function withdrawOwnerlessLink() public onlyOwner {
@@ -110,7 +133,7 @@ contract Bank is Ownable {
       //console.log("totalLinkDeposited:",getTotalLinkDeposited());
       //console.log("difference", difference);
       token.transfer(msg.sender, difference);
-
+      emit OwnerlessLinkWithdraw(msg.sender, difference);
     }
   }
 
@@ -143,6 +166,10 @@ contract Bank is Ownable {
     return address(token);
   }
 
+  function viewNumberOfAccounts() public view returns(uint) {
+    return accounts.length;
+  }
+
   /// @notice This function loops through the accounts array to find existing accounts
   /// @dev This allows the deposit function to only add new accounts to the accounts array
   function exists(address _account) public view returns (bool) {
@@ -153,14 +180,6 @@ contract Bank is Ownable {
     }
     return false;
   }
-
-  // function getLinkAllowance() public view returns(uint allowance) {
-  //   allowance = token.allowance(msg.sender, address(this));
-  //   console.log("allowance:", allowance);
-  // }
-
   
 }
 
-// 980,683 Original gas cost
-// 960,941 After making MINIMUMUSD a constant variable

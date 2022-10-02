@@ -34,7 +34,7 @@ module.exports = async function () {
      })
     
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
-        await verify(bank.address, [ethUsdPriceFeedAddress])     
+        await verify(bank.address, [ethUsdPriceFeedAddress, linkTokenAddress])     
     } else {}
 }
 

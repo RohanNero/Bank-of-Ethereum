@@ -12,8 +12,11 @@ We do not offer interest at this time!
 
 
 
+---
 
-personal notes: 
+*personal notes:* 
 
 wallets have private key and public address
 smart contracts have public abi and public address
+
+---

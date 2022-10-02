@@ -29,17 +29,17 @@ const { developmentChains } = require("../../helper-hardhat-config")
           assert.equal(response, mockV3Aggregator.address)
         })
       })
-      describe("Deposit", function () {
+      describe("deposit", function () {
         //let sendValue
         beforeEach(async function () {
           await bank.deposit({ value: sendValue })
         })
-        // it("should revert if called with 0 value", async function () {
-        //   const txResponse = bank.deposit()
-        //   await expect(txResponse).to.be.revertedWith(
-        //     "Must Send Atleast $7 USD!"
-        //   )
-        // })
+        it("should revert if called with 0 value", async function () {
+          const txResponse = bank.deposit()
+          await expect(txResponse).to.be.revertedWith(
+            "Must Send Atleast $7 USD!"
+          )
+        })
         it("should update user balance after deposit", async function () {
           const oldBal = await bank.getBalanceInETH()
           const txResponse = bank.deposit({ value: sendValue })
@@ -53,13 +53,13 @@ const { developmentChains } = require("../../helper-hardhat-config")
           const [user] = await ethers.getSigners()
           await expect(bank.deposit({ value: sendValue }))
             .to.emit(bank, "depositInfo")
-            .withArgs(user.address, sendValue)
+            .withArgs(user.address, sendValue, sendValue, sendValue.add(sendValue))
         })
-        it("should emit the balances from before and after deposit", async function () {
-          await expect(bank.deposit({ value: sendValue }))
-            .to.emit(bank, "depositBalances")
-            .withArgs(sendValue, sendValue.add(sendValue))
-        })
+        // it("should emit the balances from before and after deposit", async function () {
+        //   await expect(bank.deposit({ value: sendValue }))
+        //     .to.emit(bank, "depositBalances")
+        //     .withArgs(sendValue, sendValue.add(sendValue))
+        // })
       })
       describe("withdraw", function () {
         beforeEach(async function () {
@@ -79,13 +79,13 @@ const { developmentChains } = require("../../helper-hardhat-config")
         it("should emit the withdraw info", async function () {
           await expect(bank.withdraw(77))
             .to.emit(bank, "withdrawInfo")
-            .withArgs(deployer, "77")
+            .withArgs(deployer, 77, sendValue, sendValue.sub(77))
         })
-        it("should emit the balances from before and after withdrawal", async function () {
-          await expect(bank.withdraw(sendValue))
-            .to.emit(bank, "withdrawBalances")
-            .withArgs(sendValue, "0")
-        })
+        // it("should emit the balances from before and after withdrawal", async function () {
+        //   await expect(bank.withdraw(sendValue))
+        //     .to.emit(bank, "withdrawBalances")
+        //     .withArgs(sendValue, "0")
+        // })
       })
       describe("getBalanceInETH", function () {
         it("should return the user's balance correctly", async function () {
@@ -137,11 +137,11 @@ const { developmentChains } = require("../../helper-hardhat-config")
         })
         it("allows owner to withdraw LINK correctly", async function() {
           const initialBal = await bank.viewDepositedLinkBalance()
-          await bank.withdrawLink(100)
-          const finalBal = await bank.viewDepositedLinkBalance()
           //console.log(`initialBal: ${initialBal}`)
+          await bank.withdrawLink(77)
+          const finalBal = await bank.viewDepositedLinkBalance()
           //console.log(`finalBal: ${finalBal}`)
-          assert.equal(initialBal.sub(100).toString(), finalBal.toString())
+          assert.equal((initialBal.sub(77)).toString(), finalBal.toString())
         })
         it("reverts if withdraw exceeds balance", async function() {
           await expect(bank.withdrawLink(777)).to.be.revertedWith("Bank__InsufficientLinkBalance(777, 100)")
@@ -149,6 +149,15 @@ const { developmentChains } = require("../../helper-hardhat-config")
       
       })
       describe("depositApprovedLink", function() {
+        it("pushes new users to accounts array", async function() {
+          const num = await bank.viewNumberOfAccounts()
+          //console.log(`num: ${num}`)
+          await mockLinkToken.approve(bank.address, 777)
+          await bank.depositApprovedLink()
+          const newNum = await bank.viewNumberOfAccounts()
+          //console.log(`newNum: ${newNum}`)
+          assert.equal(num.add(1).toString(), newNum.toString())
+        })
         it("allows users to deposit link correctly", async function() {
           //console.log((await mockLinkToken.balanceOf(deployer)).toString())
           const initialBal = await bank.viewDepositedLinkBalance()
@@ -157,6 +166,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
           const finalBal = await bank.viewDepositedLinkBalance()
           //console.log(`initialBal: ${initialBal}`)
           //console.log(`finalBal: ${finalBal}`)
+          assert.equal(initialBal.add(100).toString(), finalBal.toString())
         })
       })
       describe("withdrawOwnerlessLink", function() {
@@ -177,11 +187,14 @@ const { developmentChains } = require("../../helper-hardhat-config")
           //console.log(`newLinkBalance: ${newLinkBalance}`)
           assert.equal(totalLinkDeposited.sub(50).toString(), newTotalLinkDeposited.toString())
         })
+        it("emits the OwnerlessLinkWithdraw event", async function() {
+          await expect(bank.withdrawOwnerlessLink()).to.emit(bank, "OwnerlessLinkWithdraw").withArgs(deployer, 50)
+        })
       })
       describe("getThisAddress", function() {
         it("returns address correctly", async function() {
           const addr = await bank.getThisAddress()
-          //console.log(addr)
+          assert.equal(bank.address, addr)
         })
         
       })
@@ -190,6 +203,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
           const addr = await bank.getLinkTokenAddress()
           // console.log(`link address: ${addr}`)
           // console.log(`mock address: ${mockLinkToken.address}`)
+          assert.equal(mockLinkToken.address, addr)
         })
         
       })
