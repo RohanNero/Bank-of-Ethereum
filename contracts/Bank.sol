@@ -98,8 +98,8 @@ contract Bank is Ownable {
 
   function withdrawLink(uint amount) public onlyOwner() {
     if (amount <= linkBalances[msg.sender]) {
-      require(token.transfer(msg.sender, amount));
       linkBalances[msg.sender] -= amount;
+      require(token.transfer(msg.sender, amount));
       emit withdrawInfo(msg.sender, amount, (linkBalances[msg.sender] + amount), linkBalances[msg.sender]);
     } else {
       revert Bank__InsufficientLinkBalance(amount, linkBalances[msg.sender]);
