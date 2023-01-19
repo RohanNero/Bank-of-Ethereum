@@ -12,10 +12,16 @@ const networkConfig = {
     name: "polygon",
     ethUsdPriceFeed: "0xF9680D99D6C9589e2a93a78A04A279e509205945",
   },
+  43113: {
+    name: "fuji",
+    ethUsdPriceFeed: "0x86d67c3D38D2bCeE722E601025C25a575021c6EA",
+    linkTokenAddress: "0x0b9d5D9136855f6FEc3c0993feE6E9CE8a297846",
+  },
   31337: {},
 };
 
 const developmentChains = ["hardhat", "localhost"];
+const ethChains = ["goerli", "mainnet"];
 const DECIMALS = 8;
 const INITIAL_ANSWER = 200000000000;
 

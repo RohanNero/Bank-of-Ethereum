@@ -11,6 +11,8 @@ const RINKEBY_URL = process.env.RINKEBY_URL;
 const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
+const FUJI_RPC_URL = process.env.FUJI_RPC_URL;
+
 module.exports = {
   namedAccounts: {
     deployer: {
@@ -40,6 +42,12 @@ module.exports = {
       accounts: [PRIVATE_KEY],
       chainId: 4,
       blockConfirmations: 7,
+    },
+    fuji: {
+      url: FUJI_RPC_URL || "",
+      accounts: [PRIVATE_KEY] || "key",
+      chainId: 43113,
+      blockConfirmations: 3,
     },
   },
   gasReporter: {
